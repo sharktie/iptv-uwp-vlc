@@ -1,0 +1,15 @@
+{
+  "id": "com.sharktie.iptv",
+  "version": "1.0.31",
+  "vendor": "sharktie",
+  "type": "web",
+  "main": "index.html",
+  "title": "IPTV player",
+  "icon": "icon.png",
+  "largeIcon": "icon_large.png",
+  "iconColor": "#000000",
+  "disableBackHistoryAPI": true,
+  "requiredPermissions": [
+    "com.webos.media"
+  ]
+}

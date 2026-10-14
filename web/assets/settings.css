@@ -1,0 +1,856 @@
+/* ── Settings — Floating Modal Bubble ────────────────────────────────────────
+   Single centred card with tab navigation. Matches base.css theme tokens.
+   TV-optimised: large touch targets, clear focus rings, D-pad friendly layout.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Page wrapper ────────────────────────────────────────────────────────────── */
+#settings-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: var(--bg);
+    position: relative;
+    font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Ambient glow ────────────────────────────────────────────────────────────── */
+.ambient-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(120px);
+    opacity: 0.18;
+    animation: glowPulse 8s ease-in-out infinite alternate;
+}
+.glow-a {
+    width: 37.5rem; height: 37.5rem;
+    background: radial-gradient(circle, #3b82f6 0%, transparent 70%);
+    top: -9.375rem; left: -6.25rem;
+    animation-delay: 0s;
+}
+.glow-b {
+    width: 31.25rem; height: 31.25rem;
+    background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+    bottom: -7.5rem; right: -5rem;
+    animation-delay: -4s;
+}
+@keyframes glowPulse {
+    from { opacity: 0.12; transform: scale(0.96); }
+    to   { opacity: 0.22; transform: scale(1.04); }
+}
+
+/* ── Modal bubble ────────────────────────────────────────────────────────────── */
+#settings-modal {
+    position: relative;
+    /* Not min()/clamp() — those are Chromium 79+ and are dropped on webOS 5.40,
+       which left the modal shrunk to its content and overflowing (header/tabs
+       clipped off-screen). max-width/max-height are equivalent and universal. */
+    width: 94vw;
+    max-width: 61.25rem;
+    max-height: 92vh;
+    background: var(--bg2, #111218);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 1.75rem;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 32px 80px rgba(0,0,0,0.7),
+        0 8px 24px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(18px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Modal header ────────────────────────────────────────────────────────────── */
+#modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.375rem 1.75rem 1.125rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+}
+
+#back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.75rem;
+    color: var(--text-dim, #8a8f9e);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+}
+#back-btn:hover {
+    background: rgba(255,255,255,0.10);
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text, #e8eaf0);
+    transform: scale(1.06);
+}
+#back-btn.tv-focus-visible {
+    background: rgba(59,130,246,0.15);
+    border-color: var(--accent, #3b82f6);
+    color: var(--text, #e8eaf0);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.35);
+    outline: none;
+}
+
+#modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex: 1;
+}
+.title-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text, #e8eaf0);
+    letter-spacing: -0.01em;
+}
+.title-text em {
+    font-style: normal;
+    color: var(--text-dim, #8a8f9e);
+    font-weight: 400;
+}
+
+/* ── Tab strip ───────────────────────────────────────────────────────────────── */
+#tab-strip {
+    display: flex;
+    /* Wraps to a second line rather than clipping once the tab count outgrows
+       the modal width — at 155% interface size even eight tabs are tight. */
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.75rem 1.25rem 0;
+    flex-shrink: 0;
+    background: var(--bg2, #111218);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6875rem 1.25rem 0.8125rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0.625rem 0.625rem 0 0;
+    color: var(--text-dim, #8a8f9e);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+    margin-bottom: -0.0625rem;
+}
+.tab-btn:hover {
+    color: var(--text, #e8eaf0);
+    background: rgba(255,255,255,0.04);
+}
+.tab-btn.active {
+    color: var(--accent, #3b82f6);
+    border-bottom-color: var(--accent, #3b82f6);
+    background: rgba(59,130,246,0.06);
+}
+.tab-btn.tv-focus-visible {
+    outline: none;
+    background: rgba(59,130,246,0.12);
+    color: var(--text, #e8eaf0);
+    box-shadow: 0 0 0 2px var(--accent, #3b82f6) inset;
+}
+.tab-btn.active.tv-focus-visible {
+    color: var(--accent, #3b82f6);
+    background: rgba(59,130,246,0.16);
+}
+
+/* ── Settings body: panels + QR side-by-side ─────────────────────────────────── */
+#settings-body {
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-flex: 1;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#panels-wrap {
+    -webkit-box-flex: 1;
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── Panels ──────────────────────────────────────────────────────────────────── */
+.settings-panel {
+    display: none;
+    flex-direction: column;
+    gap: 1.125rem;
+    padding: 1.625rem 1.75rem 1.75rem;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+.settings-panel::-webkit-scrollbar { width: 0.3125rem; }
+.settings-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 0.1875rem; }
+.settings-panel.active {
+    display: -webkit-box;
+    display: flex;
+    animation: panelIn 0.2s ease both;
+}
+@keyframes panelIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Profiles panel needs no extra padding — layout manages its own spacing */
+#panel-profiles {
+    padding: 0;
+    overflow: hidden;
+}
+
+.panel-hint {
+    font-size: 0.875rem;
+    color: var(--text-faint, #565b6e);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── Profiles two-column layout ──────────────────────────────────────────────── */
+#profiles-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Left sidebar — profile list */
+#profiles-sidebar {
+    width: 13.75rem;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0.75rem;
+    gap: 0.625rem;
+    overflow: hidden;
+}
+
+#profiles-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+#profiles-list::-webkit-scrollbar { width: 0.25rem; }
+#profiles-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 0.125rem; }
+
+/* Individual profile row in the list */
+.profile-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6875rem 0.75rem;
+    border-radius: 0.625rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-dim, #8a8f9e);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    font-family: inherit;
+    min-width: 0;
+}
+.profile-item:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text, #e8eaf0);
+}
+.profile-item.selected {
+    background: rgba(59,130,246,0.12);
+    border-color: rgba(59,130,246,0.25);
+    color: var(--text, #e8eaf0);
+}
+.profile-item.tv-focus-visible {
+    outline: none;
+    border-color: var(--accent, #3b82f6);
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+    color: var(--text, #e8eaf0);
+    background: rgba(59,130,246,0.10);
+}
+
+/* Active-profile tick */
+.profile-tick {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #34d399;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.profile-item.is-active .profile-tick { opacity: 1; }
+
+.profile-item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Profile type badge ──────────────────────────────────────────────────────── */
+.profile-type-badge {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.3125rem;
+    background: rgba(255,255,255,0.07);
+    color: var(--text-dim, #8a8f9e);
+    flex-shrink: 0;
+    margin-left: 0.125rem;
+}
+.profile-item.is-active .profile-type-badge {
+    background: rgba(59,130,246,0.15);
+    color: var(--accent, #3b82f6);
+}
+
+/* ── Active profile dot ──────────────────────────────────────────────────────── */
+.profile-active-dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--accent, #3b82f6);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(59,130,246,0.7);
+}
+
+/* Right editor area */
+#profile-editor {
+    flex: 1;
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    min-width: 0;
+    overflow-y: auto;
+    padding: 1.375rem 1.5rem 1.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+#profile-editor::-webkit-scrollbar { width: 0.25rem; }
+#profile-editor::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 0.125rem; }
+
+#editor-empty {
+    flex: 1;
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-faint, #565b6e);
+    font-size: 0.875rem;
+    text-align: center;
+    line-height: 1.7;
+}
+#editor-empty p { margin: 0; }
+#empty-add-profile-btn {
+    width: auto;
+    min-width: 11.25rem;
+    margin-top: 0.75rem;
+}
+
+#editor-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+}
+/* The `display:flex` above otherwise overrides the [hidden] attribute, leaving
+   the form visible in the empty (no-profile) state. */
+#editor-form[hidden] { display: none; }
+
+#editor-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+#editor-header .settings-btn-danger {
+    flex-shrink: 0;
+    align-self: flex-end;
+    height: 3rem;
+}
+
+/* ── Source type toggle (Xtream | M3U) ──────────────────────────────────────── */
+#type-toggle {
+    display: flex;
+    gap: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.625rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.type-btn {
+    flex: 1;
+    padding: 0.625rem 0;
+    background: transparent;
+    border: none;
+    color: var(--text-dim, #8a8f9e);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+}
+.type-btn + .type-btn {
+    border-left: 1px solid rgba(255,255,255,0.1);
+}
+.type-btn.type-active {
+    background: var(--accent, #3b82f6);
+    color: #fff;
+}
+.type-btn.tv-focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent, #3b82f6) inset;
+    color: var(--text, #e8eaf0);
+}
+
+/* URL list rows */
+#url-section {
+    display: flex;
+    flex-direction: column;
+}
+
+#url-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.url-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.url-row .settings-input {
+    flex: 1;
+}
+
+.url-remove-btn {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 0.5rem;
+    color: rgba(239,68,68,0.6);
+    cursor: pointer;
+    font-size: 1.125rem;
+    line-height: 1;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    font-family: inherit;
+}
+.url-remove-btn:hover {
+    background: rgba(239,68,68,0.1);
+    border-color: #ef4444;
+    color: #f87171;
+}
+.url-remove-btn.tv-focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(239,68,68,0.5);
+    background: rgba(239,68,68,0.1);
+}
+
+/* URL index badge */
+.url-index {
+    flex-shrink: 0;
+    width: 1.375rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-faint, #565b6e);
+    text-align: right;
+    user-select: none;
+}
+
+.field-hint {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: var(--text-faint, #565b6e);
+    letter-spacing: 0;
+    text-transform: none;
+    margin-left: 0.375rem;
+}
+
+#prof-epg-section {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 1rem;
+}
+
+#editor-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 1rem;
+}
+
+/* ── Field groups ────────────────────────────────────────────────────────────── */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4375rem;
+    flex: 1;
+}
+
+.field-row {
+    display: flex;
+    gap: 0.875rem;
+}
+
+.field-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--text-dim, #8a8f9e);
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────────── */
+.settings-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 0.75rem;
+    color: var(--text, #e8eaf0);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+.settings-input::placeholder { color: var(--text-faint, #565b6e); }
+/* background-COLOR, not the `background` shorthand: the shorthand also resets
+   background-repeat/position/image, which tiled .settings-select's chevron
+   artwork across the whole control the moment it took focus. */
+.settings-input:focus,
+.settings-input.tv-focus-visible {
+    border-color: var(--accent, #3b82f6);
+    background-color: rgba(59,130,246,0.06);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.18);
+}
+
+/* Dropdowns are driven by LEFT/RIGHT on the remote, never by opening the native
+   popup (see stepSelect() in settings.js). The chevrons therefore point left and
+   right rather than down, so the control advertises how it's actually operated. */
+.settings-select {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='10' viewBox='0 0 34 10'%3E%3Cpath d='M5 1L1 5l4 4M29 1l4 4-4 4' stroke='%23565b6e' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 3.25rem;
+}
+/* Brighten the arrows when the row has the focus ring, so it's obvious which
+   control the D-pad is about to act on. */
+.settings-select.tv-focus-visible {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='10' viewBox='0 0 34 10'%3E%3Cpath d='M5 1L1 5l4 4M29 1l4 4-4 4' stroke='%233b82f6' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* ── Diagnostics readout ─────────────────────────────────────────────────────── */
+.diag-value {
+    flex-shrink: 0;
+    margin-left: 1rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text, #e8eaf0);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    max-width: 55%;
+    word-break: break-word;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+.settings-btn {
+    width: 100%;
+    padding: 0.9375rem 1.25rem;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+}
+.settings-btn:hover { transform: scale(1.01); }
+.settings-btn.tv-focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.45);
+    transform: scale(1.01);
+}
+
+.settings-btn-primary {
+    background: var(--accent, #3b82f6);
+    border-color: var(--accent, #3b82f6);
+    color: #fff;
+}
+.settings-btn-primary:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.settings-btn-secondary {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+    color: var(--text, #e8eaf0);
+}
+.settings-btn-secondary:hover {
+    background: rgba(255,255,255,0.10);
+}
+
+.settings-btn-danger {
+    background: transparent;
+    border-color: rgba(239,68,68,0.3);
+    color: #f87171;
+    width: auto;
+    min-width: 5.625rem;
+    padding: 0.8125rem 1.375rem;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+.settings-btn-danger:hover {
+    background: rgba(239,68,68,0.1);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+/* ── Status line ─────────────────────────────────────────────────────────────── */
+.settings-status {
+    font-size: 0.875rem;
+    color: var(--text-dim, #8a8f9e);
+    min-height: 1.2em;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+.settings-status.ok  { color: #34d399; }
+.settings-status.err { color: #f87171; }
+
+/* ── Cache panel ─────────────────────────────────────────────────────────────── */
+.cache-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.cache-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 0.875rem;
+    padding: 1rem 1.125rem;
+}
+
+.cache-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1875rem;
+}
+
+/* A diagnostic row whose value is a block of text — the raw panel reply. The
+   normal row puts its value in a narrow right-aligned column, which is right
+   for a count and unreadable for JSON, so this variant stacks instead. */
+.diag-block {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.diag-raw {
+    font-family: monospace;
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--text-dim, #a9b0c0);
+    background: rgba(0,0,0,0.28);
+    border-radius: 0.5rem;
+    padding: 0.75rem 0.875rem;
+    /* Provider replies are one long unbroken token as often as not. */
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.cache-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text, #e8eaf0);
+}
+
+.cache-desc {
+    font-size: 0.8125rem;
+    color: var(--text-faint, #565b6e);
+}
+
+/* ── Remote QR — permanent right column ──────────────────────────────────────── */
+#remote-qr-section {
+    width: 14.375rem;
+    -webkit-box-flex: 0;
+    flex-shrink: 0;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    display: -webkit-box;
+    display: flex;
+}
+#remote-qr-inner {
+    width: 14.375rem;
+    padding: 1.25rem 1rem 1rem;
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+    height: 100%;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+#remote-qr-inner::-webkit-scrollbar { width: 0.25rem; }
+#remote-qr-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 0.125rem; }
+
+.remote-qr-hint {
+    font-size: 0.75rem;
+    color: var(--text-dim, #8a8a9a);
+    line-height: 1.5;
+    margin: 0;
+}
+#remote-qr-wrap {
+    display: -webkit-box;
+    display: flex;
+    -webkit-box-pack: center;
+    justify-content: center;
+}
+#remote-qr-img {
+    border-radius: 0.625rem;
+    background: #fff;
+    padding: 0.5rem;
+    display: block;
+}
+#remote-qr-url {
+    text-align: center;
+    font-size: 0.625rem;
+    color: var(--text-dim, #8a8a9a);
+    word-break: break-all;
+}
+#remote-qr-status {
+    text-align: center;
+    min-height: 1.125rem;
+}
+
+/* ── Category toggle rows (Live TV & VOD panels) ─────────────────────────────── */
+.cat-section-label {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-dim, #8a8a9a);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.625rem;
+}
+.cat-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6875rem 0.875rem;
+    border-radius: 0.625rem;
+    border: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+    margin-bottom: 0.375rem;
+    transition: background 0.15s, border-color 0.15s;
+}
+.cat-toggle-row.hidden-cat {
+    background: rgba(229,0,30,0.07);
+    border-color: rgba(229,0,30,0.2);
+}
+.cat-toggle-name {
+    font-size: 0.875rem;
+    color: var(--text, #f0f0f5);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 0.75rem;
+}
+.cat-toggle-row.hidden-cat .cat-toggle-name {
+    color: var(--text-dim, #8a8a9a);
+    text-decoration: line-through;
+}
+.cat-toggle-btn {
+    width: 2.625rem;
+    height: 1.5rem;
+    border-radius: 0.75rem;
+    border: none;
+    background: rgba(255,255,255,0.12);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+.cat-toggle-btn[aria-pressed="true"] {
+    background: var(--accent, #e5001e);
+}
+.cat-toggle-knob {
+    position: absolute;
+    top: 0.1875rem;
+    left: 0.1875rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s;
+    pointer-events: none;
+}
+.cat-toggle-btn[aria-pressed="true"] .cat-toggle-knob {
+    left: 1.3125rem;
+}
+.cat-toggle-btn.tv-focus-visible {
+    box-shadow: 0 0 0 3px rgba(229,0,30,0.5);
+    outline: none;
+}

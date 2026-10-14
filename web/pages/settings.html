@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings — IPTV Player</title>
+    <meta name="theme-color" content="#08090d" />
+    <link rel="stylesheet" href="../assets/base.css" />
+    <link rel="stylesheet" href="../assets/settings.css" />
+    <!-- Blocking on purpose: detects the video pipeline and sets the UI scale
+         before first paint. Must stay in <head> and must stay synchronous. -->
+    <script src="../assets/boot.js"></script>
+    <link rel="stylesheet" href="../assets/native.css" />
+    <script src="../js/platform/native.js"></script>
+</head>
+<body>
+
+<div id="settings-page">
+    <div class="ambient-glow glow-a"></div>
+    <div class="ambient-glow glow-b"></div>
+
+    <div id="settings-modal" role="dialog" aria-label="Settings">
+
+        <!-- Header -->
+        <div id="modal-header">
+            <button id="back-btn" title="Back">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M11 4L6 9L11 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div id="modal-title">
+                <span class="title-text">IPTV <em>Settings</em></span>
+            </div>
+        </div>
+
+        <!-- Tab strip -->
+        <div id="tab-strip" role="tablist">
+            <button class="tab-btn active" data-value="profiles" role="tab" aria-selected="true">Profiles</button>
+            <button class="tab-btn" data-value="display" role="tab" aria-selected="false">Display</button>
+            <button class="tab-btn" data-value="player"  role="tab" aria-selected="false">Player</button>
+            <button class="tab-btn" data-value="subtitles" role="tab" aria-selected="false">Subtitles</button>
+            <button class="tab-btn" data-value="epg"     role="tab" aria-selected="false">EPG</button>
+            <button class="tab-btn" data-value="livetv"  role="tab" aria-selected="false">Live TV</button>
+            <button class="tab-btn" data-value="vod"     role="tab" aria-selected="false">VOD</button>
+            <button class="tab-btn" data-value="cache"   role="tab" aria-selected="false">Cache</button>
+            <button class="tab-btn" data-value="updates" role="tab" aria-selected="false">Updates</button>
+            <button class="tab-btn" data-value="diag"    role="tab" aria-selected="false">Diagnostics</button>
+        </div>
+
+        <!-- Body row: panels on left, QR panel always on right -->
+        <div id="settings-body">
+
+            <!-- ── Panels ── -->
+            <div id="panels-wrap">
+
+                <!-- Panel: Profiles -->
+                <div class="settings-panel active" id="panel-profiles" role="tabpanel">
+                    <div id="profiles-layout">
+
+                        <!-- Left: profile list -->
+                        <div id="profiles-sidebar">
+                            <div id="profiles-list" role="listbox" aria-label="Profiles"></div>
+                            <button class="settings-btn settings-btn-secondary" id="add-profile-btn">
+                                + New Profile
+                            </button>
+                        </div>
+
+                        <!-- Right: editor -->
+                        <div id="profile-editor">
+                            <div id="editor-empty">
+                                <p>No profiles yet.<br>Create one to get started.</p>
+                                <button class="settings-btn settings-btn-primary" id="empty-add-profile-btn">
+                                    + New Profile
+                                </button>
+                            </div>
+
+                            <div id="editor-form" hidden>
+
+                                <!-- Profile name + delete -->
+                                <div id="editor-header">
+                                    <div class="field-group" style="flex:1">
+                                        <label class="field-label" for="prof-name">Profile Name</label>
+                                        <input class="settings-input" id="prof-name" type="text"
+                                               placeholder="e.g. My IPTV Service" spellcheck="false" autocomplete="off" />
+                                    </div>
+                                    <button class="settings-btn settings-btn-danger" id="delete-profile-btn">Delete</button>
+                                </div>
+
+                                <!-- Source type toggle -->
+                                <div id="type-toggle">
+                                    <button class="type-btn type-active" id="type-xtream-btn">Xtream</button>
+                                    <button class="type-btn" id="type-m3u-btn">M3U</button>
+                                </div>
+
+                                <!-- Xtream fields -->
+                                <div id="xtream-fields">
+                                    <div class="field-row">
+                                        <div class="field-group">
+                                            <label class="field-label" for="prof-username">Username</label>
+                                            <input class="settings-input" id="prof-username" type="text"
+                                                   placeholder="username" spellcheck="false" autocomplete="off" />
+                                        </div>
+                                        <div class="field-group">
+                                            <label class="field-label" for="prof-password">Password</label>
+                                            <input class="settings-input" id="prof-password" type="password"
+                                                   placeholder="password" autocomplete="off" />
+                                        </div>
+                                    </div>
+
+                                    <div id="url-section">
+                                        <div class="field-label" style="margin-bottom:8px">
+                                            Server URLs <span class="field-hint">(tried in order)</span>
+                                        </div>
+                                        <div id="url-list"></div>
+                                        <button class="settings-btn settings-btn-secondary" id="add-url-btn" style="margin-top:8px">
+                                            + Add URL
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- M3U fields -->
+                                <div id="m3u-fields" style="display:none">
+                                    <div class="field-group">
+                                        <label class="field-label" for="prof-m3u-url">Playlist URL</label>
+                                        <input class="settings-input" id="prof-m3u-url" type="text"
+                                               placeholder="http://example.com/playlist.m3u8" spellcheck="false" />
+                                    </div>
+                                </div>
+
+                                <!-- EPG (shared) -->
+                                <div id="prof-epg-section">
+                                    <div class="field-label" style="margin-bottom:8px">EPG <span class="field-hint">(optional)</span></div>
+                                    <div class="field-group" style="margin-bottom:10px">
+                                        <label class="field-label" for="prof-epg-url">XMLTV URL</label>
+                                        <input class="settings-input" id="prof-epg-url" type="text"
+                                               placeholder="http://example.com/epg.xml" spellcheck="false" />
+                                    </div>
+                                    <div class="field-group">
+                                        <label class="field-label" for="prof-epg-match">Match channels by</label>
+                                        <select class="settings-input settings-select" id="prof-epg-match">
+                                            <option value="tvg-id">tvg-id / epg_channel_id</option>
+                                            <option value="name">Channel name</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div id="editor-actions">
+                                    <button class="settings-btn settings-btn-primary" id="save-profile-btn">Save &amp; Connect</button>
+                                    <div id="profile-status" class="settings-status"></div>
+                                </div>
+
+                            </div><!-- /editor-form -->
+                        </div><!-- /profile-editor -->
+                    </div><!-- /profiles-layout -->
+                </div><!-- /panel-profiles -->
+
+                <!-- Panel: Display -->
+                <div class="settings-panel" id="panel-display" role="tabpanel">
+                    <p class="panel-hint">
+                        Interface size scales every screen — Live TV, VOD, Catch-up and this one.
+                        It never changes the video itself, so fullscreen playback is unaffected.
+                    </p>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-ui-scale">Interface size</label>
+                        <select class="settings-input settings-select" id="cfg-ui-scale"></select>
+                    </div>
+                    <div id="ui-scale-status" class="settings-status"></div>
+                </div>
+
+                <!-- Panel: Player -->
+                <div class="settings-panel" id="panel-player" role="tabpanel">
+                    <!-- The app plays everything with VLC (js/platform/native-video.js). -->
+                    <div class="native-only">
+                        <p class="panel-hint">
+                            Everything plays with VLC. If a channel's picture is broken or
+                            stutters, press X during playback to switch between hardware and
+                            software decoding for it.
+                        </p>
+                        <div class="field-group">
+                            <label class="field-label" for="cfg-vlc-hwdec">Decoding</label>
+                            <select class="settings-input settings-select" id="cfg-vlc-hwdec">
+                                <option value="on">Hardware — smoothest, least power</option>
+                                <option value="off">Software — try if pictures are broken</option>
+                            </select>
+                        </div>
+                        <p class="panel-hint">
+                            How much of a stream is loaded before it starts. Less starts channels
+                            faster; more rides out a shaky connection.
+                        </p>
+                        <div class="field-group">
+                            <label class="field-label" for="cfg-vlc-live-caching">Live TV buffer</label>
+                            <select class="settings-input settings-select" id="cfg-vlc-live-caching">
+                                <option value="1000">1 second — fastest channel changes</option>
+                                <option value="1500">1.5 seconds (recommended)</option>
+                                <option value="3000">3 seconds</option>
+                                <option value="5000">5 seconds — unreliable connection</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="cfg-vlc-vod-caching">Movies &amp; series buffer</label>
+                            <select class="settings-input settings-select" id="cfg-vlc-vod-caching">
+                                <option value="3000">3 seconds (recommended)</option>
+                                <option value="5000">5 seconds</option>
+                                <option value="10000">10 seconds — unreliable connection</option>
+                            </select>
+                        </div>
+                        <div id="vlc-pref-status" class="settings-status"></div>
+                    </div>
+                    <div class="webos-only">
+                    <p class="panel-hint">
+                        Streams are tried with each player in turn until one works. Pick a default
+                        if one player is reliably better on your TV — it's tried first, and the
+                        others still act as fallbacks. The RED button cycles players during playback.
+                    </p>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-default-player">Default player</label>
+                        <select class="settings-input settings-select" id="cfg-default-player">
+                            <option value="auto">Automatic — try each in order</option>
+                            <option value="native">Native — TV decoder (HEVC, HDR, Dolby)</option>
+                            <option value="hls">HLS.js — software HLS (H.264 / AAC)</option>
+                            <option value="ts">Native TS — raw MPEG-TS</option>
+                            <option value="last">Remember last used (RED button)</option>
+                        </select>
+                    </div>
+                    <p class="panel-hint" id="player-last-hint" style="display:none"></p>
+                    <div id="player-pref-status" class="settings-status"></div>
+
+                    <div class="cat-section-label" style="margin-top:0.5rem">Video output</div>
+                    <p class="panel-hint">
+                        Older LG sets draw video on a separate hardware layer that can't be
+                        rounded or clipped, which shows up as a black Live&nbsp;TV preview box
+                        with working sound. Compatibility mode draws the preview square and
+                        unclipped to fix that. Automatic already picks it for webOS&nbsp;5 and
+                        below — change this only if the preview is black, or if it's fine and
+                        you'd rather have the rounded corners back.
+                    </p>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-pip-mode">Live TV preview rendering</label>
+                        <select class="settings-input settings-select" id="cfg-pip-mode">
+                            <option value="auto">Automatic — decide from the TV's browser</option>
+                            <option value="compat">Compatibility — square, unclipped preview</option>
+                            <option value="standard">Standard — rounded, composited preview</option>
+                        </select>
+                    </div>
+                    <p class="panel-hint" id="pip-mode-hint"></p>
+
+                    <p class="panel-hint">
+                        Multiview (the BLUE button on Live&nbsp;TV) plays several channels at
+                        once. Every TV has a limited number of video decoders — ask for more
+                        than it has and the extra tiles stay black, sometimes taking the
+                        working ones with them. Automatic uses 4 on webOS&nbsp;6 and newer and
+                        2 below that. Lower it if tiles go black; raise it if your TV copes.
+                    </p>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-mv-tiles">Multiview tiles</label>
+                        <select class="settings-input settings-select" id="cfg-mv-tiles">
+                            <option value="0">Automatic — decide from the TV</option>
+                            <option value="2">2 — side by side</option>
+                            <option value="3">3 — one large, two small</option>
+                            <option value="4">4 — 2×2 grid</option>
+                        </select>
+                    </div>
+                    <div id="pip-mode-status" class="settings-status"></div>
+                    </div><!-- /webos-only -->
+                </div>
+
+                <!-- Panel: Subtitles -->
+                <div class="settings-panel" id="panel-subtitles" role="tabpanel">
+                    <p class="panel-hint">
+                        How subtitles look, and where to get them when your provider doesn't
+                        supply any. Position and timing are adjusted during playback instead —
+                        press the subtitles button on the player, since both only make sense
+                        while you can see the result.
+                    </p>
+
+                    <div class="cat-section-label">Appearance</div>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label class="field-label" for="cfg-subs-size">Text size</label>
+                            <select class="settings-input settings-select" id="cfg-subs-size">
+                                <option value="md">Normal</option>
+                                <option value="lg">Large</option>
+                                <option value="xl">Larger</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="cfg-subs-style">Style</label>
+                            <select class="settings-input settings-select" id="cfg-subs-style">
+                                <option value="shadow">Shadow — no background</option>
+                                <option value="box">Boxed — solid background</option>
+                                <option value="plain">Plain — no shadow or box</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-subs-colour">Colour</label>
+                        <select class="settings-input settings-select" id="cfg-subs-colour">
+                            <option value="white">White</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="cyan">Cyan</option>
+                        </select>
+                    </div>
+                    <div id="subs-appearance-status" class="settings-status"></div>
+
+                    <div class="cat-section-label" style="margin-top:0.5rem">OpenSubtitles</div>
+                    <p class="panel-hint">
+                        Most providers embed subtitles in the video rather than supplying
+                        separate files, and this TV's decoder often can't read those. Searching
+                        OpenSubtitles sidesteps the provider entirely. Needs a free API key from
+                        opensubtitles.com/consumers. Adding your account login as well raises
+                        the daily download limit.
+                    </p>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-os-key">API key</label>
+                        <input class="settings-input" id="cfg-os-key" type="text"
+                               placeholder="paste your API key" spellcheck="false" autocomplete="off" />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-os-lang">Subtitle language</label>
+                        <select class="settings-input settings-select" id="cfg-os-lang"></select>
+                    </div>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label class="field-label" for="cfg-os-user">Username <span class="field-hint">(optional)</span></label>
+                            <input class="settings-input" id="cfg-os-user" type="text"
+                                   placeholder="opensubtitles username" spellcheck="false" autocomplete="off" />
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="cfg-os-pass">Password <span class="field-hint">(optional)</span></label>
+                            <input class="settings-input" id="cfg-os-pass" type="password"
+                                   placeholder="password" autocomplete="off" />
+                        </div>
+                    </div>
+                    <button class="settings-btn settings-btn-secondary" id="cfg-os-test-btn">Test connection</button>
+                    <div id="os-status" class="settings-status"></div>
+                </div>
+
+                <!-- Panel: EPG -->
+                <div class="settings-panel" id="panel-epg" role="tabpanel">
+                    <p class="panel-hint">Global EPG fallback used when no profile-specific EPG is set.</p>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-epg-url">XMLTV URL</label>
+                        <input class="settings-input" id="cfg-epg-url" type="text"
+                               placeholder="http://example.com/epg.xml" spellcheck="false" />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="cfg-epg-match">Match channels by</label>
+                        <select class="settings-input settings-select" id="cfg-epg-match">
+                            <option value="tvg-id">tvg-id / epg_channel_id</option>
+                            <option value="name">Channel name</option>
+                        </select>
+                    </div>
+                    <button class="settings-btn settings-btn-secondary" id="cfg-epg-load-btn">Save EPG Settings</button>
+                    <div id="epg-load-status" class="settings-status"></div>
+                </div>
+
+                <!-- Panel: Live TV -->
+                <div class="settings-panel" id="panel-livetv" role="tabpanel">
+                    <p class="panel-hint">Hidden categories won't appear in the sidebar or channel list.</p>
+                    <div id="livetv-cats-wrap"></div>
+                    <p id="livetv-cats-empty" class="panel-hint" style="display:none">
+                        No categories cached yet — open Live TV first, then come back here.
+                    </p>
+                </div>
+
+                <!-- Panel: VOD -->
+                <div class="settings-panel" id="panel-vod" role="tabpanel">
+                    <p class="panel-hint">Hidden categories won't appear in the VOD browser.</p>
+                    <div id="vod-movies-wrap">
+                        <div class="cat-section-label">Movies</div>
+                        <div id="vod-movie-cats-wrap"></div>
+                    </div>
+                    <div id="vod-series-wrap" style="margin-top:18px">
+                        <div class="cat-section-label">Series</div>
+                        <div id="vod-series-cats-wrap"></div>
+                    </div>
+                    <p id="vod-cats-empty" class="panel-hint" style="display:none">
+                        No VOD categories cached yet — open VOD first, then come back here.
+                    </p>
+                </div>
+
+                <!-- Panel: Cache -->
+                <div class="settings-panel" id="panel-cache" role="tabpanel">
+                    <p class="panel-hint">Clear cached data to force a fresh fetch on next launch.</p>
+                    <div class="cache-actions">
+                        <div class="cache-row">
+                            <div class="cache-info">
+                                <span class="cache-label">All Cached Lists</span>
+                                <span class="cache-desc">Channels, categories, playlist, catch-up, VOD and guide</span>
+                            </div>
+                            <button class="settings-btn settings-btn-danger" id="cfg-clear-cache-btn">Clear</button>
+                        </div>
+                        <div id="cfg-clear-ch-status" class="settings-status"></div>
+                        <div class="cache-row">
+                            <div class="cache-info">
+                                <span class="cache-label">EPG Cache</span>
+                                <span class="cache-desc">Programme guide data</span>
+                            </div>
+                            <button class="settings-btn settings-btn-danger" id="cfg-clear-epg-btn">Clear</button>
+                        </div>
+                        <div id="cfg-clear-epg-status" class="settings-status"></div>
+                    </div>
+                </div>
+
+                <!-- Panel: Updates -->
+                <div class="settings-panel" id="panel-updates" role="tabpanel">
+                    <p class="panel-hint webos-only">Check GitHub for a newer version and install it.</p>
+                    <p class="panel-hint native-only">
+                        Check GitHub for a newer version. Updates install from the Xbox Device
+                        Portal: download the new release's zip and add it the same way as the
+                        first install. Your playlists and settings are kept.
+                    </p>
+                    <div class="cache-row">
+                        <div class="cache-info">
+                            <span class="cache-label">Current version</span>
+                            <span class="cache-desc" id="upd-current">—</span>
+                        </div>
+                        <button class="settings-btn settings-btn-secondary" id="upd-check-btn">Check for Updates</button>
+                    </div>
+                    <div id="upd-status" class="settings-status"></div>
+                    <div id="upd-available" style="display:none">
+                        <div class="cache-row">
+                            <div class="cache-info">
+                                <span class="cache-label">Update available</span>
+                                <span class="cache-desc" id="upd-new-version"></span>
+                            </div>
+                            <button class="settings-btn settings-btn-primary" id="upd-install-btn">⬇ Install</button>
+                        </div>
+                        <div id="upd-progress" class="settings-status"></div>
+                    </div>
+                    <div class="cache-row native-only">
+                        <div class="cache-info">
+                            <span class="cache-label">App log</span>
+                            <span class="cache-desc">What the app and VLC did this session — useful when a stream won't play.</span>
+                        </div>
+                        <button class="settings-btn settings-btn-secondary" id="log-view-btn">View log</button>
+                    </div>
+                    <pre id="log-view" class="native-only" hidden></pre>
+                </div>
+
+                <!-- Panel: Diagnostics -->
+                <div class="settings-panel" id="panel-diag" role="tabpanel">
+                    <p class="panel-hint">
+                        What this TV actually reports, gathered on the device. Read this instead of
+                        needing a developer console — it answers what the app can and can't do here.
+                    </p>
+                    <div id="diag-list"></div>
+                    <button class="settings-btn settings-btn-secondary" id="diag-refresh-btn">Refresh</button>
+                    <div id="diag-status" class="settings-status"></div>
+                </div>
+
+            </div><!-- /panels-wrap -->
+
+            <!-- QR panel — always visible, right of all panels -->
+            <div id="remote-qr-section">
+                <div id="remote-qr-inner">
+                    <p class="remote-qr-hint">Scan on your phone or computer to configure settings remotely.</p>
+                    <div id="remote-qr-wrap">
+                        <img id="remote-qr-img" src="" alt="QR Code" width="190" height="190" />
+                    </div>
+                    <div id="remote-qr-url"></div>
+                    <div id="remote-qr-status" class="settings-status"></div>
+                    <button class="settings-btn settings-btn-secondary" id="remote-new-code-btn">New Code</button>
+                </div>
+            </div>
+
+        </div><!-- /settings-body -->
+
+    </div><!-- /settings-modal -->
+</div><!-- /settings-page -->
+
+<script src="../js/polyfills.js"></script>
+<script src="../js/core/store.js"></script>
+<script src="../js/core/net.js"></script>
+<script src="../js/core/dom.js"></script>
+<script src="../js/core/config.js"></script>
+<script src="../js/data/favourites.js"></script>
+<script src="../assets/qrcode.js"></script>
+<script src="../js/opensubtitles.js"></script>
+<script src="../js/settings.js"></script>
+</body>
+</html>

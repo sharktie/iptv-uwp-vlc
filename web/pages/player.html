@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Player — IPTV</title>
+    <meta name="theme-color" content="#000000" />
+    <link rel="stylesheet" href="../assets/base.css" />
+    <link rel="stylesheet" href="../assets/player.css" />
+    <!-- Blocking on purpose: detects the video pipeline and sets the UI scale
+         before first paint. Must stay in <head> and must stay synchronous. -->
+    <script src="../assets/boot.js"></script>
+    <link rel="stylesheet" href="../assets/native.css" />
+    <script src="../js/platform/native.js"></script>
+</head>
+<body class="vod-player-page">
+
+<!-- pip-wrap + video (required by IPTVPlayer constructor) -->
+<div id="pip-wrap">
+    <video id="player" playsinline></video>
+    <div id="player-msg" style="display:none"></div>
+</div>
+
+<!-- OSD — fades out after a few seconds of inactivity -->
+<div id="osd" class="osd-hidden">
+
+    <!-- Top bar: back button + title -->
+    <div id="osd-top">
+        <button id="player-back-btn" class="osd-btn" title="Back">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M13 4L7 10L13 16" stroke="currentColor" stroke-width="2.4"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <span id="player-title"></span>
+    </div>
+
+    <!-- Bottom bar: scrubber + controls -->
+    <div id="osd-bottom">
+        <div id="osd-progress-wrap">
+            <span id="osd-time-cur">0:00</span>
+            <div id="osd-seek-track">
+                <div id="osd-seek-buf"></div>
+                <div id="osd-seek-fill"></div>
+                <div id="osd-seek-thumb"></div>
+            </div>
+            <span id="osd-time-dur">--:--</span>
+        </div>
+
+        <div id="osd-controls">
+            <button class="osd-btn osd-ctrl-btn" id="ctrl-rewind" title="Rewind 10s">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                    <text x="8.5" y="15.5" font-size="5.5" font-family="sans-serif" font-weight="700" fill="currentColor">10</text>
+                </svg>
+            </button>
+
+            <button class="osd-btn osd-ctrl-btn osd-ctrl-play" id="ctrl-play" title="Play/Pause">
+                <svg class="icon-play" width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg class="icon-pause" width="26" height="26" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                    <path d="M6 19h4V5H6zm8-14v14h4V5z"/>
+                </svg>
+            </button>
+
+            <button class="osd-btn osd-ctrl-btn" id="ctrl-forward" title="Forward 30s">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.01 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
+                    <text x="8.5" y="15.5" font-size="5.5" font-family="sans-serif" font-weight="700" fill="currentColor">30</text>
+                </svg>
+            </button>
+
+            <!-- Removed at runtime unless this is an episode with a next one. -->
+            <button class="osd-btn osd-ctrl-btn" id="ctrl-next" title="Next episode">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6 5l9 7-9 7V5z"/><rect x="16.5" y="5" width="2.5" height="14" rx="1"/>
+                </svg>
+            </button>
+
+            <button class="osd-btn osd-ctrl-btn" id="ctrl-audio" title="Audio track">
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 15V9a8 8 0 0 1 16 0v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="2" y="13.5" width="4.6" height="7" rx="2.3" fill="currentColor"/>
+                    <rect x="17.4" y="13.5" width="4.6" height="7" rx="2.3" fill="currentColor"/>
+                </svg>
+            </button>
+
+            <button class="osd-btn osd-ctrl-btn" id="ctrl-subs" title="Subtitles">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <rect x="2.5" y="5" width="19" height="14" rx="2.5" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 10.6a2.1 2.1 0 1 0 0 2.8M16.5 10.6a2.1 2.1 0 1 0 0 2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </button>
+
+            <button class="osd-btn osd-ctrl-btn" id="ctrl-speed" title="Playback speed">
+                <svg width="23" height="23" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 18a9 9 0 1 1 16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 15l4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="15.5" r="1.6" fill="currentColor"/>
+                </svg>
+            </button>
+
+            <button class="osd-btn osd-ctrl-btn" id="ctrl-fullscreen" title="Toggle fullscreen">
+                <svg class="icon-fs-enter" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                </svg>
+                <svg class="icon-fs-exit" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                    <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Subtitle picker -->
+    <div id="subs-menu" hidden>
+        <div id="subs-menu-title">Subtitles</div>
+        <div id="subs-menu-list"></div>
+    </div>
+</div>
+
+<script src="../js/polyfills.js"></script>
+<script src="../js/core/store.js"></script>
+<script src="../js/core/net.js"></script>
+<script src="../js/core/dom.js"></script>
+<script src="../js/core/config.js"></script>
+<script src="../js/data/subtitles.js"></script>
+<script src="../js/opensubtitles.js"></script>
+<script src="../js/data/assrt.js"></script>
+<script src="../js/player/ass.js"></script>
+<script src="../js/player/codecs.js"></script>
+<script src="../js/player/preferences.js"></script>
+<script src="../js/platform/native-video.js"></script>
+<script src="../js/player/engine.js"></script>
+<script src="../js/player/episodes.js"></script>
+<script src="../js/player/subtitles.js"></script>
+<script src="../js/player-vod.js"></script>
+</body>
+</html>

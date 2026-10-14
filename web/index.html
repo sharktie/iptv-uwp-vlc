@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IPTV Player</title>
+    <meta name="theme-color" content="#0c0c0e" />
+    <link rel="stylesheet" href="assets/base.css" />
+    <link rel="stylesheet" href="assets/home.css" />
+    <!-- Blocking on purpose: detects the video pipeline and sets the UI scale
+         before first paint. Must stay in <head> and must stay synchronous. -->
+    <script src="assets/boot.js"></script>
+    <link rel="stylesheet" href="assets/native.css" />
+    <script src="js/platform/native.js"></script>
+</head>
+<body>
+    <div id="home">
+        <div id="home-header">
+            <div id="home-brand">📺 <span>IPTV <small data-app-version>v1.0.31</small></span></div>
+            <div id="home-date"></div>
+        </div>
+
+        <div id="home-grid">
+            <!-- Live TV — big tile -->
+            <div class="home-tile-main tile-livetv" id="tile-livetv" tabindex="-1">
+                <div class="home-tile-icon">📺</div>
+                <div class="home-tile-label">Live TV</div>
+                <div class="home-tile-sub">Watch live channels</div>
+            </div>
+
+            <!-- VOD — big tile -->
+            <div class="home-tile-main tile-vod" id="tile-vod" tabindex="-1">
+                <div class="home-tile-icon">🎬</div>
+                <div class="home-tile-label">VOD</div>
+                <div class="home-tile-sub">Movies &amp; TV shows</div>
+            </div>
+
+            <!-- Small tiles column -->
+            <div class="home-tile-col">
+                <div class="home-tile-small tile-catchup" id="tile-catchup" tabindex="-1">
+                    <div class="home-tile-icon">⏮</div>
+                    <div class="home-tile-small-text">
+                        <div class="home-tile-label">Catch-up</div>
+                        <div class="home-tile-sub">Watch missed shows</div>
+                    </div>
+                </div>
+
+                <div class="home-tile-small tile-settings" id="tile-settings" tabindex="-1">
+                    <div class="home-tile-icon">⚙</div>
+                    <div class="home-tile-small-text">
+                        <div class="home-tile-label">Settings</div>
+                        <div class="home-tile-sub">Configure your app</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load order is a dependency chain, not a preference:
+         polyfills → core (Store → Net → Config, Dom) → page script. -->
+    <script src="js/polyfills.js"></script>
+    <script src="js/core/store.js"></script>
+    <script src="js/core/net.js"></script>
+    <script src="js/core/dom.js"></script>
+    <script src="js/core/config.js"></script>
+    <script src="js/home.js"></script>
+    <script defer src="js/prewarm.js"></script>
+</body>
+</html>

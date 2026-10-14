@@ -1,0 +1,153 @@
+/* multiview.css — the Live TV multi-channel grid.
+   Loaded only by pages/livetv.html; the overlay is created on demand and
+   removed on exit, so none of this costs anything until it's used. */
+
+#mv-root {
+    position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+    z-index: 10000;
+    background: #000;
+}
+
+/* CSS Grid is Chromium 57+, which rules it out on webOS 5 and below — so the
+   tiles are absolutely positioned from percentages instead. That works
+   identically everywhere back to Chromium 38 and, more importantly, gives each
+   tile a plain axis-aligned rectangle with no clipping ancestor, which is what
+   a hardware video plane needs (see the video-plane notes in player.css).
+
+   #mv-grid must therefore BE the tiles' containing block. Without an explicit
+   position the percentages below would resolve against #mv-root instead — the
+   same rectangle today, and silently the wrong one the moment anything is added
+   around the grid. */
+#mv-grid {
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+}
+
+.mv-tile {
+    position: absolute;
+    background: #000;
+    border: 2px solid transparent;
+    overflow: hidden;
+}
+
+/* ── 2 tiles: side by side ───────────────────────────────────────────────── */
+#mv-root[data-tiles="2"] .mv-tile { top: 0; height: 100%; width: 50%; }
+#mv-root[data-tiles="2"] .mv-tile[data-index="0"] { left: 0; }
+#mv-root[data-tiles="2"] .mv-tile[data-index="1"] { left: 50%; }
+
+/* ── 3 tiles: one large left, two stacked right ──────────────────────────── */
+#mv-root[data-tiles="3"] .mv-tile[data-index="0"] { left: 0;   top: 0;   width: 50%; height: 100%; }
+#mv-root[data-tiles="3"] .mv-tile[data-index="1"] { left: 50%; top: 0;   width: 50%; height: 50%; }
+#mv-root[data-tiles="3"] .mv-tile[data-index="2"] { left: 50%; top: 50%; width: 50%; height: 50%; }
+
+/* ── 4 tiles: 2×2 ────────────────────────────────────────────────────────── */
+#mv-root[data-tiles="4"] .mv-tile { width: 50%; height: 50%; }
+#mv-root[data-tiles="4"] .mv-tile[data-index="0"] { left: 0;   top: 0; }
+#mv-root[data-tiles="4"] .mv-tile[data-index="1"] { left: 50%; top: 0; }
+#mv-root[data-tiles="4"] .mv-tile[data-index="2"] { left: 0;   top: 50%; }
+#mv-root[data-tiles="4"] .mv-tile[data-index="3"] { left: 50%; top: 50%; }
+
+.mv-video {
+    width: 100%; height: 100%;
+    display: block;
+    object-fit: contain;
+    background: #000;
+}
+
+/* The active tile is the one with sound, so it needs to be unmistakable from
+   across a room — a thin ring is not enough at TV viewing distance. */
+.mv-tile.mv-active {
+    border-color: var(--accent);
+    z-index: 2;
+}
+.mv-tile.mv-active .mv-label {
+    background: var(--accent);
+    color: #fff;
+}
+
+/* ── Zoom ─────────────────────────────────────────────────────────────────────
+   The active tile grows to fill the overlay and is stacked over the others,
+   which keep playing underneath, completely covered by its opaque background.
+
+   The other tiles are deliberately NOT hidden. `display: none` on a playing
+   <video> makes the platform release its decoder, and getting one back on
+   unzoom is the same decoder-reset risk that rules out the native Fullscreen
+   API everywhere else in this app (see assets/player.css). Zoom is meant to be
+   instant and reversible, so it changes position, size and stacking only —
+   nothing that can cost a stream.
+
+   The price is that a zoomed grid still holds every decoder it started with.
+   That is the right trade: the alternative saves resources the user has already
+   been allocated, and risks the picture they are actually watching. */
+#mv-root.mv-zoomed .mv-tile.mv-zoom-target {
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    border-color: transparent;
+    z-index: 4;
+}
+
+/* The channel name is a transient confirmation, not a permanent caption.
+   Four names burned into the corners is clutter you stop reading after the
+   first minute, and it sits over the picture the entire time you are watching.
+   So it is hidden by default and flashed only for the tile you just selected
+   or just retuned — see flashLabel() in livetv/multiview.js. */
+.mv-label {
+    position: absolute; left: 0.75rem; bottom: 0.75rem;
+    max-width: calc(100% - 1.5rem);
+    padding: 0.375rem 0.75rem;
+    background: rgba(0,0,0,0.72);
+    border-radius: 0.375rem;
+    color: rgba(255,255,255,0.9);
+    font-size: 1rem; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    pointer-events: none;
+    opacity: 0;
+    -webkit-transition: opacity 0.25s ease; transition: opacity 0.25s ease;
+}
+.mv-label.mv-label-visible { opacity: 1; }
+
+.mv-msg {
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 0 1.5rem;
+    text-align: center;
+    background: rgba(0,0,0,0.72);
+    color: var(--text-dim);
+    font-size: 1rem;
+    pointer-events: none;
+}
+.mv-msg-title  { font-size: 1.125rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+.mv-msg-detail { font-size: 0.875rem; line-height: 1.5; color: rgba(255,255,255,0.6); max-width: 26rem; }
+
+/* Key help. Shown on entry and after every press, then fades — present when
+   you are looking for it, gone once you know the layout. */
+#mv-hint {
+    position: absolute; left: 50%; bottom: 1.75rem;
+    -webkit-transform: translateX(-50%); transform: translateX(-50%);
+    padding: 0.75rem 1.25rem;
+    background: rgba(0,0,0,0.82);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    color: rgba(255,255,255,0.72);
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 3;
+    -webkit-transition: opacity 0.25s ease; transition: opacity 0.25s ease;
+}
+#mv-hint.mv-hint-visible { opacity: 1; }
+.mv-key {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    margin: 0 0.125rem;
+    background: rgba(255,255,255,0.14);
+    border-radius: 0.3125rem;
+    color: #fff; font-weight: 700;
+}
+
+/* Hide the page behind the overlay. Purely to stop the browser painting a
+   channel list nobody can see — the overlay is opaque anyway, but on a TV that
+   layout work competes with four decoders for the same budget. */
+body.multiview-open #app { visibility: hidden; }

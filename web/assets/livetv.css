@@ -1,0 +1,476 @@
+/* ── App shell ───────────────────────────────────────────────────────────────── */
+#app { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────────── */
+#sidebar {
+    width: var(--sidebar-w); min-width: var(--sidebar-w);
+    display: flex; flex-direction: column;
+    background: var(--bg2); border-right: var(--border);
+    overflow: hidden; z-index: 10;
+}
+#sidebar-header { padding: 1.5rem 1.125rem 1.125rem; border-bottom: var(--border); flex-shrink: 0; }
+#brand { font-size: 1.75rem; font-weight: 700; color: var(--accent); margin-bottom: 1.125rem; display: flex; align-items: center; gap: 0.875rem; }
+#brand span { color: var(--text); }
+#brand small { font-size: 1rem; font-weight: 400; color: var(--text-dim); margin-left: 0.375rem; }
+
+#home-btn {
+    width: 2.875rem; height: 2.875rem; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg4); border: var(--border);
+    border-radius: 50%; color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+#home-btn svg { width: 1.25rem; height: 1.25rem; display: block; }
+#settings-btn {
+    width: 2.875rem; height: 2.875rem; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg3); border: var(--border); border-radius: 0.625rem;
+    color: var(--text-dim); cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+#settings-btn svg { width: 1.25rem; height: 1.25rem; display: block; }
+
+#home-btn:hover,
+#home-btn.tv-focus-visible,
+#settings-btn:hover,
+#settings-btn.tv-focus-visible {
+    background: var(--accent); border-color: var(--accent);
+    color: #fff; transform: scale(1.08);
+}
+#home-btn.tv-focus-visible,
+#settings-btn.tv-focus-visible { box-shadow: 0 0 0 3px var(--accent-dim); }
+#search {
+    width: 100%; padding: 0.9375rem 1rem;
+    background: var(--bg3); border: var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-size: 1.1875rem; outline: none;
+}
+#search:focus, #search.tv-focus-visible { border-color: var(--accent); }
+#search::placeholder { color: var(--text-dim); }
+#status { margin-top: 0.625rem; font-size: 1.0625rem; color: var(--text-faint); }
+
+/* ── Sidebar panels ──────────────────────────────────────────────────────────── */
+.sidebar-panel { display: none; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
+.sidebar-panel.active { display: flex; }
+
+/* ── Categories ──────────────────────────────────────────────────────────────── */
+#categories {
+    display: flex; flex-direction: column; gap: 0.25rem; padding: 0.5rem;
+    overflow-y: auto; flex: 1; min-height: 0;
+    scrollbar-width: thin; scrollbar-color: var(--bg4) transparent;
+}
+#categories::-webkit-scrollbar { width: 0.375rem; }
+#categories::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 0.1875rem; }
+
+.cat-btn {
+    width: 100%; text-align: left; padding: 1.0625rem 1rem;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 0.5rem; color: var(--text-dim);
+    font-size: 1.1875rem; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+}
+.cat-btn:hover  { background: var(--bg3); color: var(--text); }
+.cat-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.cat-btn.tv-focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.cat-section { display: flex; flex-direction: column; }
+.cat-section-hdr {
+    width: 100%; text-align: left; padding: 1.0625rem 1rem;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 0.5rem; color: var(--text-dim);
+    font-size: 1.1875rem; cursor: pointer;
+    display: flex; align-items: center; gap: 0.5rem;
+    white-space: nowrap; overflow: hidden; flex-shrink: 0;
+}
+.cat-section-hdr:hover  { background: var(--bg3); color: var(--text); }
+.cat-section-hdr.active { color: var(--gold); font-weight: 600; }
+.cat-section-hdr.tv-focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.fav-section-hdr        { color: var(--gold-dim); }
+.fav-section-hdr:hover  { color: var(--gold); }
+.fav-section-hdr.active { background: rgba(197,153,10,0.15); border-color: var(--gold-dim); color: var(--gold); }
+
+.section-star    { font-size: 1.1875rem; flex-shrink: 0; }
+.section-label   { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.section-chevron { flex-shrink: 0; font-size: 1rem; margin-left: auto; display: inline-block; transition: transform 0.2s ease; }
+.cat-section.open .section-chevron { transform: rotate(180deg); }
+
+.cat-section-list { display: none; flex-direction: column; gap: 0.1875rem; padding-left: 0.875rem; }
+.cat-section.open .cat-section-list { display: flex; }
+
+.cat-sub-btn {
+    width: 100%; text-align: left; padding: 0.9375rem 1rem;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 0.5rem; color: var(--text-dim);
+    font-size: 1.125rem; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+}
+.cat-sub-btn:hover           { background: var(--bg3); color: var(--text); }
+.cat-sub-btn.active          { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.cat-sub-btn.tv-focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ── Category row: name + "favourite the whole category" star ─────────────────
+   Same two-control shape as a channel row, so the D-pad rule transfers: the
+   name selects, RIGHT steps onto the ★. The star is always rendered (not
+   revealed on hover) — a control that only appears once you are already on it
+   is undiscoverable with a remote. */
+.cat-row {
+    display: flex; align-items: center;
+    gap: 0.25rem; flex-shrink: 0; min-width: 0;
+}
+.cat-row .cat-sub-btn { flex: 1; min-width: 0; }
+
+.cat-star-btn {
+    flex-shrink: 0;
+    width: 2.5rem; height: 2.5rem;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 0.5rem;
+    color: var(--text-faint);
+    font-size: 1.25rem; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.cat-star-btn:hover          { color: var(--gold); background: var(--bg3); }
+.cat-star-btn.active         { color: var(--gold); }
+.cat-star-btn.tv-focus-visible {
+    color: var(--gold);
+    outline: 3px solid var(--gold); outline-offset: 2px;
+}
+
+/* Starred categories listed under Favourites, separated from the named groups
+   above them — the two behave differently and shouldn't read as one list. */
+.fav-cat-header {
+    padding: 0.75rem 1rem 0.375rem;
+    font-size: 0.875rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-faint); flex-shrink: 0;
+}
+.fav-cat-item::before { content: "★ "; color: var(--gold-dim); }
+.fav-cat-item.active::before { color: #fff; }
+
+.cat-add-grp-btn {
+    width: 100%; text-align: left; padding: 0.9375rem 1rem;
+    background: transparent; border: 1px dashed var(--bg5);
+    border-radius: 0.5rem; color: var(--text-faint);
+    font-size: 1.125rem; cursor: pointer; flex-shrink: 0; margin-top: 0.25rem;
+}
+.cat-add-grp-btn:hover,
+.cat-add-grp-btn.tv-focus-visible { border-color: var(--gold-dim); color: var(--gold); outline: 3px solid var(--gold-dim); outline-offset: 2px; }
+
+/* ── Main area ───────────────────────────────────────────────────────────────── */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); min-width: 0; }
+
+/* ── Preview bar ─────────────────────────────────────────────────────────────── */
+/* No `will-change` here. It used to carry `will-change: opacity`, which nothing
+   in this bar animates (the fade belongs to #preview-info, a child). Its only
+   effect was to promote the bar — an ANCESTOR of the video — into its own
+   composited layer, which on webOS 5.x and below forces the decoder's hardware
+   overlay plane to be composited into that layer instead of punched through the
+   page. The result was a black PiP with working audio. See the video-plane
+   notes in player.css. */
+#preview-bar {
+    display: flex; flex-direction: row; flex-shrink: 0;
+    align-items: center; gap: 1rem;
+    background: var(--bg2); border-bottom: var(--border);
+    padding: 1rem 1.25rem;
+    height: calc(var(--pip-h) + 2rem);
+    overflow: hidden;
+}
+/* The bar's `overflow: hidden` is lifted in PiP compatibility mode — see the
+   video-plane block in player.css, which owns that decision so the bar and the
+   PiP can never end up on opposite sides of it. */
+#preview-info {
+    flex: 1; display: flex; flex-direction: column;
+    gap: 0.625rem; overflow: hidden; min-width: 0; height: 100%;
+    contain: layout style;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+#preview-info.preview-visible { opacity: 1; }
+#preview-channel-name {
+    font-size: 1.625rem; font-weight: 700;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+}
+#epg-panel {
+    display: flex; gap: 0.75rem;
+    flex: 1; min-height: 0; overflow: hidden;
+    contain: layout style;
+}
+.epg-block {
+    display: flex; gap: 0.875rem; align-items: flex-start; flex: 1;
+    background: var(--bg3); border-radius: var(--radius);
+    padding: 0.875rem 1rem; border: var(--border); min-width: 0; overflow: hidden;
+}
+#epg-now-block  { flex: 2; }
+#epg-next-block { flex: 1; }
+.epg-badge {
+    font-size: 0.875rem; font-weight: 700; padding: 0.375rem 0.625rem; border-radius: 0.3125rem;
+    flex-shrink: 0; margin-top: 0.125rem;
+}
+.epg-badge.now  { background: var(--accent); color: #fff; }
+.epg-badge.next { background: var(--bg5); color: var(--text-dim); }
+.epg-content    { min-width: 0; flex: 1; }
+.epg-title { font-size: 1.3125rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.epg-time  { font-size: 1.0625rem; color: var(--text-dim); margin-top: 0.25rem; }
+.epg-desc  {
+    font-size: 1rem; color: var(--text-dim); margin-top: 0.3125rem;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+#epg-bar      { margin-top: 0.625rem; height: 0.25rem; background: var(--bg5); border-radius: 0.1875rem; overflow: hidden; }
+#epg-bar-fill { height: 100%; background: var(--accent); border-radius: 0.1875rem; width: 0%; }
+
+/* ── Timeline header ─────────────────────────────────────────────────────────── */
+#tl-header-bar {
+    display: flex; flex-shrink: 0; align-items: stretch;
+    background: var(--bg2); border-bottom: var(--border); height: 3.875rem;
+    contain: layout style;
+}
+#tl-nav {
+    display: flex; align-items: center; gap: 0.625rem; padding: 0 0.875rem;
+    border-right: var(--border); flex-shrink: 0; width: 26.25rem;
+}
+.tl-nav-btn {
+    background: var(--bg4); border: var(--border); border-radius: 0.5rem;
+    color: var(--text-dim); font-size: 1.125rem; padding: 0.625rem 1rem;
+    cursor: pointer; white-space: nowrap;
+}
+.tl-nav-btn:hover, .tl-nav-btn.tv-focus-visible { background: var(--accent); border-color: var(--accent); color: #fff; }
+#tl-now { font-weight: 600; color: var(--accent); border-color: var(--accent-dim); }
+#tl-now:hover { color: #fff; }
+#tl-time-header-wrap { flex: 1; position: relative; overflow: hidden; }
+#tl-time-header { display: flex; height: 100%; }
+.tl-header-slot {
+    flex: 1; display: flex; align-items: center; padding-left: 0.875rem;
+    font-size: 1.0625rem; font-weight: 600; color: var(--text-dim);
+    border-right: 1px solid var(--bg4); white-space: nowrap;
+}
+#tl-now-line {
+    position: absolute; top: 0; bottom: 0; width: 0.125rem;
+    background: var(--accent); pointer-events: none; z-index: 10; display: none;
+    -webkit-transform: translateZ(0); transform: translateZ(0);
+}
+
+/* ── Channel list ────────────────────────────────────────────────────────────── */
+#channel-list-wrap {
+    flex: 1; overflow-y: auto; overflow-x: hidden; position: relative;
+    scrollbar-width: thin; scrollbar-color: var(--bg4) transparent;
+    -webkit-transform: translateZ(0); transform: translateZ(0);
+    will-change: scroll-position;
+}
+#channel-list-wrap:focus { outline: none; }
+#channel-list-wrap::-webkit-scrollbar { width: 0.375rem; }
+#channel-list-wrap::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 0.25rem; }
+#channel-list { position: relative; min-height: 100%; -webkit-transform: translateZ(0); transform: translateZ(0); }
+.no-results { text-align: center; color: var(--text-dim); padding: 3.125rem 0; font-size: 1.375rem; }
+
+/* ── Channel row ─────────────────────────────────────────────────────────────── */
+.tl-row {
+    display: flex; align-items: stretch;
+    height: var(--row-h); min-height: var(--row-h); max-height: var(--row-h);
+    border-bottom: var(--border); cursor: pointer;
+    left: 0; right: 0;
+    contain: layout style; overflow: hidden;
+    transition: background 0.12s; border-radius: 0;
+}
+.tl-row:hover             { background: var(--bg3); }
+.tl-row.selected          { background: rgba(229,0,30,0.07); }
+.tl-row.selected .ch-name { color: var(--accent); }
+.tl-row.tv-focus-visible  { outline: none !important; background: var(--bg3); z-index: 5; }
+.tl-row:focus             { outline: none !important; }
+.tl-row:focus-visible     { outline: none !important; }
+.tl-row.tv-row-active     { background: var(--bg3); }
+
+.tl-col1 { flex: 1; display: flex; align-items: stretch; min-width: 0; overflow: hidden; cursor: pointer; max-height: var(--row-h); }
+.tl-col1.tv-focus-visible { outline: 3px solid var(--accent) !important; outline-offset: -3px !important; }
+
+/* Row number — the channel's position in the list currently on screen, which
+   is what typing a number jumps to. Tabular figures and right alignment so the
+   digits form a straight column instead of wandering as they gain a digit. */
+.tl-num {
+    width: 3.25rem; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 0.75rem;
+    font-size: 1.0625rem; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-faint);
+}
+.tl-row.selected .tl-num         { color: var(--accent); }
+.tl-row.tv-row-active .tl-num,
+.tl-row:hover .tl-num            { color: var(--text-dim); }
+
+.tl-logo-cell {
+    width: 5rem; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; padding: 0 0.625rem;
+}
+.ch-logo-static  { width: 3.25rem; height: 3.25rem; object-fit: contain; display: block; border-radius: 0.625rem; }
+.ch-logo-fallback {
+    width: 3.25rem; height: 3.25rem; display: flex; align-items: center; justify-content: center;
+    font-size: 1.3125rem; font-weight: 700; color: var(--accent);
+    background: var(--bg4); border-radius: 0.625rem; border: 1px solid var(--bg5);
+}
+.tl-name-epg-wrap {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+    padding: 0 0.625rem 0 0.25rem; min-width: 0; gap: 0.3125rem; overflow: hidden;
+    max-height: var(--row-h);
+}
+.ch-name {
+    font-size: 1.1875rem; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.2; flex-shrink: 0;
+}
+.tl-epg-strip {
+    flex: 1; position: relative; overflow: hidden;
+    min-height: 2rem; max-height: 2.75rem; width: 100%; display: flex; align-items: center;
+}
+.tl-epg-block {
+    position: absolute; top: 0.125rem; bottom: 0.125rem; border-radius: 0.3125rem;
+    background: var(--bg3); border: 1px solid var(--bg5); overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 0.5rem; cursor: pointer; min-width: 0;
+}
+.tl-epg-block:hover        { background: var(--bg4); z-index: 2; }
+.tl-epg-block.tl-now       { background: #1a0e10; border-color: var(--accent-dim); }
+.tl-epg-block.tl-now:hover { background: #220f12; border-color: var(--accent); }
+.tl-epg-block.tl-past      { background: var(--bg2); border-color: #1c1c22; opacity: 0.55; }
+.tl-epg-block.tl-loading,
+.tl-epg-block.tl-no-epg   { background: transparent; border: none; color: var(--text-faint); font-size: 0.75rem; cursor: default; }
+.tl-block-time  { font-size: 0.8125rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; margin-bottom: 0.0625rem; flex-shrink: 0; }
+.tl-epg-block.tl-now .tl-block-time { color: var(--accent); }
+.tl-block-title { font-size: 0.9375rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-epg-block.tl-past .tl-block-title { color: var(--text-dim); }
+.tl-progress-fill {
+    position: absolute; bottom: 0; left: 0; height: 0.1875rem;
+    background: var(--accent); border-radius: 0 0 0.3125rem 0.3125rem; pointer-events: none;
+}
+
+/* ── Column buttons ──────────────────────────────────────────────────────────── */
+.tl-col2 { flex-shrink: 0; width: 4rem; display: flex; align-items: center; justify-content: center; border-left: var(--border); }
+.fav-btn {
+    width: 3.125rem; height: 3.125rem;
+    background: none; border: 1.5px solid transparent; color: var(--text-faint);
+    font-size: 1.5rem; cursor: pointer; border-radius: 0.75rem; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.13s, background 0.13s, border-color 0.13s;
+}
+.fav-btn:hover  { color: var(--gold); background: rgba(197,153,10,0.12); border-color: var(--gold-dim); }
+.fav-btn.active { color: var(--gold); }
+
+.tl-col3 { flex-shrink: 0; width: 3.75rem; display: none; align-items: center; justify-content: center; border-left: var(--border); }
+.assign-btn {
+    width: 2.875rem; height: 2.875rem;
+    background: none; border: 1.5px solid var(--bg5);
+    font-size: 1.375rem; font-weight: 700; cursor: pointer; border-radius: 0.625rem;
+    color: var(--text-faint);
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.13s, background 0.13s, border-color 0.13s;
+}
+.assign-btn:hover  { color: var(--text); background: var(--bg4); border-color: var(--bg5); }
+.assign-btn.active { color: var(--gold); border-color: var(--gold-dim); background: rgba(197,153,10,0.1); }
+
+.tl-col4 { flex-shrink: 0; width: 3.125rem; display: none; align-items: stretch; justify-content: center; border-left: var(--border); }
+.fav-reorder { display: flex; flex-direction: column; width: 100%; gap: 0; }
+.reorder-btn {
+    flex: 1; width: 100%; background: transparent; border: none; border-radius: 0;
+    color: var(--text-faint); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, color 0.12s;
+}
+.reorder-btn.reorder-up { border-bottom: 1px solid var(--bg4); border-radius: 0; }
+.reorder-btn:hover { background: var(--bg4); color: var(--text); }
+
+/* ── Assign panel ────────────────────────────────────────────────────────────── */
+.assign-panel {
+    position: fixed; z-index: 500;
+    background: var(--bg3); border: var(--border);
+    border-radius: var(--radius); padding: 0.875rem 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6); min-width: 20rem; max-width: 26.25rem;
+}
+.assign-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; padding: 0.5rem 1.25rem 0.75rem; }
+.assign-row   { display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 1.25rem; cursor: pointer; }
+.assign-row:hover, .assign-row.tv-focus-visible { background: var(--bg4); }
+.assign-row input[type="checkbox"] { accent-color: var(--gold); cursor: pointer; flex-shrink: 0; width: 1.625rem; height: 1.625rem; }
+.assign-row span { font-size: 1.25rem; color: var(--text); }
+.assign-new-btn {
+    display: block; width: 100%; text-align: left;
+    padding: 0.875rem 1.25rem; background: none; border: none;
+    border-top: var(--border); margin-top: 0.25rem; padding-top: 1rem;
+    font-size: 1.1875rem; color: var(--gold); cursor: pointer;
+}
+.assign-new-btn:hover { color: var(--gold-dim); }
+
+/* ── Context menu ────────────────────────────────────────────────────────────── */
+.ctx-menu {
+    position: fixed; z-index: 600;
+    background: var(--bg3); border: var(--border);
+    border-radius: var(--radius); padding: 0.5rem 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6); min-width: 17.5rem;
+}
+.ctx-item            { padding: 1.0625rem 1.375rem; font-size: 1.1875rem; color: var(--text); cursor: pointer; }
+.ctx-item:hover, .ctx-item.tv-focus-visible { background: var(--bg4); }
+.ctx-item.ctx-danger { color: #ff4444; }
+.ctx-item.ctx-danger:hover { background: rgba(255,68,68,0.1); }
+
+/* ── D-pad focus states ──────────────────────────────────────────────────────── */
+.tl-col2.tv-focus-visible {
+    outline: none; background: rgba(197,153,10,0.13);
+    box-shadow: inset 0 0 0 2px var(--gold-dim); border-radius: 0;
+}
+.tl-col2.tv-focus-visible .fav-btn { color: var(--gold); border-color: var(--gold); background: rgba(197,153,10,0.2); }
+.tl-col3.tv-focus-visible {
+    outline: none; background: rgba(197,153,10,0.1);
+    box-shadow: inset 0 0 0 2px var(--gold-dim); border-radius: 0;
+}
+.tl-col3.tv-focus-visible .assign-btn { color: var(--gold); border-color: var(--gold); background: rgba(197,153,10,0.18); }
+.fav-btn.tv-focus-visible {
+    outline: none; border-color: var(--gold); background: rgba(197,153,10,0.18);
+    color: var(--gold); box-shadow: 0 0 0 2px rgba(197,153,10,0.35);
+}
+.assign-btn.tv-focus-visible {
+    outline: none; border-color: var(--gold); background: rgba(197,153,10,0.15);
+    color: var(--gold); box-shadow: 0 0 0 2px rgba(197,153,10,0.35);
+}
+.assign-row.tv-focus-visible { background: var(--bg4); outline: 2px solid var(--gold-dim); outline-offset: -2px; }
+.assign-new-btn.tv-focus-visible { background: rgba(197,153,10,0.12); outline: 2px solid var(--gold-dim); outline-offset: -2px; }
+.ctx-item.tv-focus-visible { background: var(--bg4); outline: 2px solid var(--accent); outline-offset: -2px; }
+.reorder-btn.tv-focus-visible { outline: none; background: var(--accent) !important; color: #fff !important; }
+
+/* ── Channel number entry ─────────────────────────────────────────────────────
+   The box that appears while you type a channel number. Fixed to the viewport
+   and above everything: it has to be readable over the fullscreen video
+   (z-index 9999) and over the Multiview grid (10000), because those are the two
+   places where there is no channel list to look at.
+
+   Only opacity animates. The box is a sibling of the video, never an ancestor,
+   so this cannot disturb the hardware video plane on old webOS — see the
+   video-plane notes in player.css. */
+#chnum {
+    position: fixed; top: 3rem; right: 3rem; z-index: 10050;
+    display: flex; flex-direction: column; align-items: flex-end;
+    min-width: 8rem;
+    padding: 1rem 1.5rem;
+    background: rgba(12,12,14,0.92);
+    border: 2px solid var(--accent);
+    border-radius: 0.875rem;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    pointer-events: none;
+    opacity: 0;
+    -webkit-transition: opacity 0.15s ease; transition: opacity 0.15s ease;
+}
+#chnum.chnum-visible { opacity: 1; }
+#chnum.chnum-error   { border-color: var(--text-faint); }
+
+#chnum-digits {
+    font-size: 3rem; font-weight: 800; line-height: 1;
+    color: #fff; font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+}
+#chnum-digits:empty { display: none; }
+
+/* The channel the number currently points at, so you can see where you are
+   heading before it commits — and the reason for a refusal when it can't. */
+#chnum-name {
+    margin-top: 0.5rem;
+    max-width: 20rem;
+    font-size: 1.0625rem; font-weight: 600;
+    color: rgba(255,255,255,0.7);
+    text-align: right;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#chnum-name:empty { display: none; }
