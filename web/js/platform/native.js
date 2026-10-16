@@ -62,6 +62,7 @@ window.Native = (function () {
     var lastKey = {};
     var lastSelectAt = -1e9;
     var keyboardOpen = false;
+    var echoesLogged = 0;
 
     var info = { platform: webview ? 'desktop' : 'web', appVersion: null, vlcVersion: null };
     /* The app answers hello a moment after the page starts; the previous
@@ -171,12 +172,26 @@ window.Native = (function () {
         var now = performance.now();
         lastNative[action] = now;
         if (now - (lastKey[action] || -1e9) < DEDUPE_MS) return;
-        if (action === 'select' && !msg.repeat) {
+        if (action === 'select' && !msg.repeat && info.platform === 'xbox') {
+            /* OK on a text box opens the console keyboard: the one that has
+               focus, or the one the page has highlighted (every page puts its
+               focus ring on the search box or field when it is selected). */
             var active = document.activeElement;
-            if (info.platform === 'xbox' && isTextInput(active)) { openKeyboard(active); return; }
+            var ring = document.querySelector('.tv-focus-visible');
+            var box = isTextInput(active) ? active : (isTextInput(ring) && visible(ring) ? ring : null);
+            if (box) {
+                if (document.activeElement !== box) { try { box.focus(); } catch (e) {} }
+                openKeyboard(box);
+                return;
+            }
             lastSelectAt = now;
         }
         fireKey(action);
+    }
+
+    function visible(el) {
+        var r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
     }
 
     if (webview) {
@@ -190,6 +205,22 @@ window.Native = (function () {
             if (now - (lastNative[action] || -1e9) < DEDUPE_MS) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
+                return;
+            }
+            /* On Xbox the app reads the controller itself, and the browser
+               turns the same presses (and the sticks) into key events of its
+               own, at its own moments — so a stick flick could arrive twice.
+               Only the app's copy counts. A text box keeps its keys, for a
+               keyboard plugged into the console. */
+            if (info.platform === 'xbox' && !isTextInput(e.target)) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                if (echoesLogged < 5) {
+                    echoesLogged++;
+                    log('ignored a key from the browser: ' + e.key + (e.code ? ' (' + e.code + ')' : '') +
+                        (e.repeat ? ' repeat' : '') + ', ' +
+                        Math.round(now - (lastNative[action] || -1e9)) + ' ms after the controller');
+                }
                 return;
             }
             /* A keyboard's Escape (or a mouse back button) on Windows means
@@ -228,19 +259,24 @@ window.Native = (function () {
     function openKeyboard(el) {
         if (keyboardOpen) return;
         keyboardOpen = true;
-        request('app.textInput', {
-            label: labelFor(el),
+        var label = labelFor(el);
+        log('keyboard for ' + (el.id ? '#' + el.id : el.tagName.toLowerCase()) + ' (' + label + ')');
+        api.request('app.textInput', {
+            label: label,
             value: el.type === 'password' ? '' : (el.value || ''),
             kind: kindFor(el)
         }).then(function (result) {
             keyboardOpen = false;
+            log(result ? 'keyboard done: ' + result.text.length + ' characters' + (result.submitted ? ', submitted' : '')
+                       : 'keyboard cancelled');
             if (!result) return;
             el.value = result.text;
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
             if (result.submitted) fireKey('select', el);
-        }, function () {
+        }, function (error) {
             keyboardOpen = false;
+            log('keyboard failed: ' + error);
         });
     }
 
@@ -298,7 +334,7 @@ window.Native = (function () {
         });
     }
 
-    return {
+    var api = {
         available: !!webview,
         info: info,
         isXbox: function () { return info.platform === 'xbox'; },
@@ -310,4 +346,5 @@ window.Native = (function () {
         receive: receive,
         isTextInput: isTextInput
     };
+    return api;
 }());

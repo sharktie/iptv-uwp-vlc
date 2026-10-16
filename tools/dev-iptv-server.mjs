@@ -62,6 +62,29 @@ const CHANNELS = [
     codecs: ['-c:v', 'libx265', '-preset', 'ultrafast', '-tune', 'zerolatency', '-pix_fmt', 'yuv420p', '-x265-params', 'log-level=error:keyint=50',
       '-b:v', '2M', '-c:a', 'eac3', '-b:a', '192k'],
   },
+  // The same picture encoded as HDR: if VLC converts it for the screen it looks like the other
+  // channels; if not, it looks washed out and grey.
+  {
+    id: 106, name: 'HDR10 test (HEVC 10-bit PQ)', category: '1', colour: '0xd35400',
+    video: ['-f', 'lavfi', '-i', 'testsrc2=size=1280x720:rate=25'],
+    audio: ['-f', 'lavfi', '-i', 'sine=frequency=520:sample_rate=48000'],
+    hdr: 'smpte2084',
+    codecs: ['-c:v', 'libx265', '-preset', 'ultrafast', '-tune', 'zerolatency', '-pix_fmt', 'yuv420p10le',
+      '-x265-params', 'log-level=error:keyint=50:hdr10=1:colorprim=bt2020:transfer=smpte2084:colormatrix=bt2020nc:' +
+        'master-display=G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1):max-cll=1000,400',
+      '-color_primaries', 'bt2020', '-color_trc', 'smpte2084', '-colorspace', 'bt2020nc',
+      '-b:v', '3M', '-c:a', 'aac', '-b:a', '128k'],
+  },
+  {
+    id: 107, name: 'HLG test (HEVC 10-bit HLG)', category: '1', colour: '0x16a085',
+    video: ['-f', 'lavfi', '-i', 'testsrc2=size=1280x720:rate=25'],
+    audio: ['-f', 'lavfi', '-i', 'sine=frequency=580:sample_rate=48000'],
+    hdr: 'arib-std-b67',
+    codecs: ['-c:v', 'libx265', '-preset', 'ultrafast', '-tune', 'zerolatency', '-pix_fmt', 'yuv420p10le',
+      '-x265-params', 'log-level=error:keyint=50:colorprim=bt2020:transfer=arib-std-b67:colormatrix=bt2020nc',
+      '-color_primaries', 'bt2020', '-color_trc', 'arib-std-b67', '-colorspace', 'bt2020nc',
+      '-b:v', '3M', '-c:a', 'aac', '-b:a', '128k'],
+  },
   {
     id: 105, name: 'Test Radio (audio only)', category: '2', colour: '0x555555',
     video: null,
@@ -248,7 +271,9 @@ function streamLive(channel, req, res) {
   args.push(...channel.audio);
   if (channel.video) {
     args.push('-vf', `drawtext=fontfile='${FONT}':text='${channel.name.replace(/[':,]/g, ' ')}':fontsize=40:fontcolor=white:box=1:boxcolor=black@0.6:x=40:y=40,` +
-      `drawtext=fontfile='${FONT}':text='%{localtime}':fontsize=32:fontcolor=white:box=1:boxcolor=black@0.6:x=40:y=100`);
+      `drawtext=fontfile='${FONT}':text='%{localtime}':fontsize=32:fontcolor=white:box=1:boxcolor=black@0.6:x=40:y=100` +
+      // HDR channels: the SDR picture converted properly (SDR white at 100 nits), not just relabelled.
+      (channel.hdr ? `,format=yuv420p,zscale=tin=bt709:pin=bt709:min=bt709:rin=tv:t=${channel.hdr}:p=bt2020:m=bt2020nc:r=tv:npl=100,format=yuv420p10le` : ''));
   }
   args.push(...channel.codecs, '-ac', '2', '-f', 'mpegts', '-mpegts_service_id', String(channel.id), 'pipe:1');
   const ff = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'inherit'] });

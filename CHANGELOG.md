@@ -2,6 +2,11 @@
 
 A release's notes come from its section here (the heading must match the tag).
 
+## v1.0.2
+- Search boxes open the console keyboard when you press A on them (Live TV, Movies & Series, Catch-up and Settings).
+- The sticks move one step per flick: a stick springing back no longer moves twice or back the other way, and the right stick works like the left.
+- Grey 4K channels: see the Troubleshooting section of the README (they are HDR, and the Xbox needs HDR10 turned on). The app's log now says how VLC handles a channel's colours.
+
 ## v1.0.1
 - Fixed the picture's position on Xbox: the Live TV preview showed only part of the channel, off to one side; fullscreen was zoomed in and cropped; and films sat too low, with their bottom cut off. The picture now fits the preview box, and fills and centres in fullscreen and the player.
 

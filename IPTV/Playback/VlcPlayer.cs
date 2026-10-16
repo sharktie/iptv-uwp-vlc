@@ -566,7 +566,14 @@ namespace Iptv.Playback
         {
             try
             {
-                if (e.Level < LogLevel.Warning || Interlocked.Increment(ref _vlcLogLines) > VlcLogLinesPerStream)
+                // Of VLC's chatter, warnings and errors, plus how it converts the picture's colours
+                // for the screen (HDR, wide colour), which explains a washed-out or grey picture.
+                var colour = e.Level < LogLevel.Warning && e.Message != null &&
+                    (e.Message.IndexOf("transfer", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     e.Message.IndexOf("luminance", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     e.Message.IndexOf("colorspace", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     e.Message.IndexOf("color space", StringComparison.OrdinalIgnoreCase) >= 0);
+                if ((e.Level < LogLevel.Warning && !colour) || Interlocked.Increment(ref _vlcLogLines) > VlcLogLinesPerStream)
                 {
                     return;
                 }

@@ -39,6 +39,7 @@ Settings can also be filled in from your phone or computer: scan the QR code on 
 
 ## Troubleshooting
 - **A channel's picture is broken or stutters:** press X during playback to switch between hardware and software decoding for it. The app remembers which one worked for each channel.
+- **4K channels look washed out or grey:** these channels are usually HDR (HDR10 or HLG), and VLC sends HDR to the console, which then needs to output HDR too. On the Xbox, open **Settings → General → TV & display options**: **4K TV details** shows whether your TV supports HDR10 (most 4K TVs do, even without Dolby Vision), and under **Video modes** turn on **Allow HDR10**.
 - **Playback info:** press View during playback for what VLC is doing: the engine, resolution, codecs, pictures and sound played and lost, and the network speed.
 - **The log:** Settings → Updates → View log shows the end of the app's log on the TV. To copy the whole file, download it from the Device Portal: **File explorer → LocalAppData →** the IPTV package folder (`874fbd47-…`) **→ LocalState → `iptv-vlc.log`**. Include it when reporting a problem.
 
