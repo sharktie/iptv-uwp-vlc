@@ -317,7 +317,11 @@ class IPTVPlayer {
                "sound   : " + s.playedAudioBuffers + " played, " + s.lostAudioBuffers + " lost\n" +
                "network : " + s.inputKbps + " kb/s" +
                 (s.demuxCorrupted || s.demuxDiscontinuity
-                    ? "   corrupt " + s.demuxCorrupted + ", gaps " + s.demuxDiscontinuity : "");
+                    ? "   corrupt " + s.demuxCorrupted + ", gaps " + s.demuxDiscontinuity : "") +
+               (s.outputColorspace
+                    ? "\noutput  : " + s.outputColorspace +
+                      (/2084/.test(s.outputColorspace) ? " (HDR10)" : /Rec\.2020/.test(s.outputColorspace) ? " (wide colour)" : " (SDR)")
+                    : "");
     }
 
     // ── Engine plumbing ─────────────────────────────────────────────────────────

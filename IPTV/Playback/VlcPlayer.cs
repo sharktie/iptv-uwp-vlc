@@ -100,6 +100,9 @@ namespace Iptv.Playback
         private long _lengthMs;
         private int _trackRefreshQueued;
         private string _lastTracksText;
+        // How VLC's video output encodes the picture for the screen, e.g. "RGB Rec.709 gamma:22
+        // range:FULL" (SDR) or "RGB Rec.2020 gamma:2084 range:FULL" (HDR10); from its log.
+        private volatile string _outputColorspace;
 
         public VlcPlayer(CoreDispatcher dispatcher)
         {
@@ -539,6 +542,11 @@ namespace Iptv.Playback
                     if (result != null)
                     {
                         result.SetNamedValue("hardwareDecoding", JsonValue.CreateBooleanValue(_request.HardwareDecoding));
+                        var colorspace = _outputColorspace;
+                        if (colorspace != null)
+                        {
+                            result.SetNamedValue("outputColorspace", JsonValue.CreateStringValue(colorspace));
+                        }
                     }
                 }
                 RunOnUi(() => done(result));
@@ -573,6 +581,11 @@ namespace Iptv.Playback
                      e.Message.IndexOf("luminance", StringComparison.OrdinalIgnoreCase) >= 0 ||
                      e.Message.IndexOf("colorspace", StringComparison.OrdinalIgnoreCase) >= 0 ||
                      e.Message.IndexOf("color space", StringComparison.OrdinalIgnoreCase) >= 0);
+                const string UsingColorspace = "using colorspace ";
+                if (colour && e.Message.StartsWith(UsingColorspace, StringComparison.Ordinal))
+                {
+                    _outputColorspace = e.Message.Substring(UsingColorspace.Length);
+                }
                 if ((e.Level < LogLevel.Warning && !colour) || Interlocked.Increment(ref _vlcLogLines) > VlcLogLinesPerStream)
                 {
                     return;

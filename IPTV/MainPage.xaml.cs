@@ -54,6 +54,12 @@ namespace Iptv
         private double _layoutViewHeight;
         private string _layoutScaleLogged;
 
+        // Slightly less than opaque, so the console always draws the video together with the rest
+        // of the screen. Fully opaque and covering the screen, the Xbox sends it to the TV as it
+        // is: HDR channels then reach an SDR TV as HDR and look grey, while the same picture in
+        // the Live TV preview is converted for the TV and looks right. The difference can't be seen.
+        private const double ShownVideoOpacity = 0.995;
+
         public MainPage()
         {
             Log.Write("Main page starting");
@@ -434,7 +440,7 @@ namespace Iptv
                 VideoView.Width = _layoutWidth * scaleX;
                 VideoView.Height = _layoutHeight * scaleY;
             }
-            VideoView.Opacity = _videoVisible && _layoutVisible ? 1 : 0;
+            VideoView.Opacity = _videoVisible && _layoutVisible ? ShownVideoOpacity : 0;
         }
 
         private void ReloadPage()

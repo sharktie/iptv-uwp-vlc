@@ -2,6 +2,10 @@
 
 A release's notes come from its section here (the heading must match the tag).
 
+## v1.0.3
+- HDR channels (often the 4K ones) that looked grey in fullscreen on TVs without HDR, but right in the Live TV preview: fullscreen video is now drawn the same way as the preview, so the console converts it for the TV there too.
+- Playback info (View during playback) shows how VLC sends the picture to the screen: SDR or HDR10.
+
 ## v1.0.2
 - Search boxes open the console keyboard when you press A on them (Live TV, Movies & Series, Catch-up and Settings).
 - The sticks move one step per flick: a stick springing back no longer moves twice or back the other way, and the right stick works like the left.
