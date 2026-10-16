@@ -50,6 +50,9 @@ namespace Iptv
         private double _layoutY;
         private double _layoutWidth;
         private double _layoutHeight;
+        private double _layoutViewWidth;
+        private double _layoutViewHeight;
+        private string _layoutScaleLogged;
 
         public MainPage()
         {
@@ -208,7 +211,20 @@ namespace Iptv
                     string result;
                     try
                     {
-                        result = await core.ExecuteScriptAsync(script);
+                        // "#cdp Method {json}" calls the DevTools protocol instead, e.g. to lay the
+                        // page out at another size, as on Xbox.
+                        if (script.StartsWith("#cdp ", StringComparison.Ordinal))
+                        {
+                            var rest = script.Substring(5).Trim();
+                            var space = rest.IndexOf(' ');
+                            var method = space < 0 ? rest : rest.Substring(0, space);
+                            var parameters = space < 0 ? "{}" : rest.Substring(space + 1);
+                            result = await core.CallDevToolsProtocolMethodAsync(method, parameters);
+                        }
+                        else
+                        {
+                            result = await core.ExecuteScriptAsync(script);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -362,7 +378,8 @@ namespace Iptv
             ReloadPage();
         }
 
-        public void SetVideoLayout(bool visible, double x, double y, double width, double height)
+        public void SetVideoLayout(bool visible, double x, double y, double width, double height,
+            double viewWidth, double viewHeight)
         {
             _layoutSet = true;
             _layoutVisible = visible && width >= 1 && height >= 1;
@@ -370,19 +387,29 @@ namespace Iptv
             _layoutY = y;
             _layoutWidth = width;
             _layoutHeight = height;
+            _layoutViewWidth = viewWidth;
+            _layoutViewHeight = viewHeight;
             ApplyVideoLayout();
         }
 
         // Puts VLC's picture where the page's video box is: a small preview on the Live TV page,
-        // the whole screen in the player. Page pixels and XAML's are the same unit, and the web
-        // view fills the page, so the box is used as it is.
+        // the whole screen in the player. The box is in the page's pixels, which aren't XAML's on
+        // every device: on Xbox the page is laid out at 1280x720 while XAML works in 960x540. So it
+        // is scaled by the web view's size over the page's, and a box that covers the whole page
+        // simply fills the window.
         private void ApplyVideoLayout()
         {
             if (VideoView == null)
             {
                 return;
             }
-            if (!_layoutSet)
+            var viewWidth = WebView.ActualWidth;
+            var viewHeight = WebView.ActualHeight;
+            var full = !_layoutSet ||
+                (_layoutX <= 1 && _layoutY <= 1 &&
+                 _layoutViewWidth > 0 && _layoutX + _layoutWidth >= _layoutViewWidth - 1 &&
+                 _layoutViewHeight > 0 && _layoutY + _layoutHeight >= _layoutViewHeight - 1);
+            if (full)
             {
                 VideoView.HorizontalAlignment = HorizontalAlignment.Stretch;
                 VideoView.VerticalAlignment = VerticalAlignment.Stretch;
@@ -392,11 +419,20 @@ namespace Iptv
             }
             else if (_layoutVisible)
             {
+                var scaleX = _layoutViewWidth > 0 && viewWidth > 0 ? viewWidth / _layoutViewWidth : 1;
+                var scaleY = _layoutViewHeight > 0 && viewHeight > 0 ? viewHeight / _layoutViewHeight : 1;
+                var scaleText = Math.Round(scaleX, 3) + " x " + Math.Round(scaleY, 3);
+                if (scaleText != _layoutScaleLogged)
+                {
+                    _layoutScaleLogged = scaleText;
+                    Log.Write("Page is " + _layoutViewWidth + "x" + _layoutViewHeight + " in a " +
+                        Math.Round(viewWidth) + "x" + Math.Round(viewHeight) + " view: video boxes scaled " + scaleText);
+                }
                 VideoView.HorizontalAlignment = HorizontalAlignment.Left;
                 VideoView.VerticalAlignment = VerticalAlignment.Top;
-                VideoView.Margin = new Thickness(_layoutX, _layoutY, 0, 0);
-                VideoView.Width = _layoutWidth;
-                VideoView.Height = _layoutHeight;
+                VideoView.Margin = new Thickness(_layoutX * scaleX, _layoutY * scaleY, 0, 0);
+                VideoView.Width = _layoutWidth * scaleX;
+                VideoView.Height = _layoutHeight * scaleY;
             }
             VideoView.Opacity = _videoVisible && _layoutVisible ? 1 : 0;
         }
@@ -572,6 +608,11 @@ namespace Iptv
             _videoViewStarting = false;
             Log.Write("VLC video surface ready");
             _player.Initialize(e.SwapChainOptions);
+        }
+
+        private void WebView_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            ApplyVideoLayout();
         }
 
         private void VideoView_SizeChanged(object sender, SizeChangedEventArgs e)

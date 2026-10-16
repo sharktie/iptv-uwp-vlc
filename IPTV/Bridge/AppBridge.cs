@@ -50,8 +50,11 @@ namespace Iptv.Bridge
         void SetPointerMode(bool enabled);
         /// <summary>Saves a developer web app address (null for the built-in app) and reloads.</summary>
         void SetWebAppUrl(string url);
-        /// <summary>Where the page's video box is, in page pixels; the VLC picture is drawn there.</summary>
-        void SetVideoLayout(bool visible, double x, double y, double width, double height);
+        /// <summary>
+        /// Where the page's video box is, in page pixels, and the page's own size in them; the VLC
+        /// picture is drawn there.
+        /// </summary>
+        void SetVideoLayout(bool visible, double x, double y, double width, double height, double viewWidth, double viewHeight);
         string WebAppUrl { get; }
         bool IsBundledWebApp { get; }
     }
@@ -218,7 +221,8 @@ namespace Iptv.Bridge
                 case "player.layout":
                     _host.SetVideoLayout(GetBool(message, "visible", true),
                         GetNumber(message, "x", 0), GetNumber(message, "y", 0),
-                        GetNumber(message, "width", 0), GetNumber(message, "height", 0));
+                        GetNumber(message, "width", 0), GetNumber(message, "height", 0),
+                        GetNumber(message, "viewWidth", 0), GetNumber(message, "viewHeight", 0));
                     break;
             }
         }

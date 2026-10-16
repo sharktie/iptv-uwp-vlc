@@ -41,7 +41,7 @@ reports with `player.layout`.
 | `player.subtitleTrack` | `trackId` | A subtitle track from `player.tracks` (drawn by VLC), or -1 for none. |
 | `player.subtitleDelay` / `player.audioDelay` | `ms` | |
 | `player.aspect` | `mode` | `fit`, `fill` (crop to the screen), `stretch`, or a ratio such as `16:9`. |
-| `player.layout` | `visible`, `x`, `y`, `width`, `height` (page pixels) | Where the page's video box is: VLC's picture is drawn there (the Live TV preview, or the whole screen). Hidden when `visible` is false. Until the page sends one, the picture fills the window. |
+| `player.layout` | `visible`, `x`, `y`, `width`, `height`, `viewWidth`, `viewHeight` (page pixels) | Where the page's video box is, and the page's size (`innerWidth`, `innerHeight`): VLC's picture is drawn there (the Live TV preview, or the whole screen). The app scales the box by its web view's size over the page's, since page pixels aren't the app's on every device (on Xbox the page is 1280×720 and the app 960×540). A box covering the whole page fills the window. Hidden when `visible` is false. Until the page sends one, the picture fills the window. |
 | `player.stats` | `requestId` | Answered with `response`: `result` is VLC's counters for the stream playing — `displayedPictures`, `lostPictures`, `decodedVideo`, `playedAudioBuffers`, `lostAudioBuffers`, `decodedAudio`, `inputKbps`, `demuxCorrupted`, `demuxDiscontinuity`, `hardwareDecoding` — or null. |
 
 ## App → page

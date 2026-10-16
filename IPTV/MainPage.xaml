@@ -21,7 +21,7 @@
                        IsTabStop="False" />
 
         <!-- The controller drives the page through AppBridge (see ControllerBridge). -->
-        <controls:WebView2 x:Name="WebView" />
+        <controls:WebView2 x:Name="WebView" SizeChanged="WebView_SizeChanged" />
 
         <Grid x:Name="LoadErrorPanel" Background="#FF000000" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="560" Padding="24" Spacing="16">

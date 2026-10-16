@@ -354,10 +354,13 @@ window.NativeVideo = (function () {
                 var r = el.getBoundingClientRect();
                 var shown = r.width >= 2 && r.height >= 2 && el.offsetParent !== null &&
                     getComputedStyle(el).visibility !== 'hidden';
+                /* The page's own size goes with the box: the app needs it to
+                   turn page pixels into its own, which differ on Xbox. */
                 var box = {
                     visible: shown,
                     x: Math.round(r.left * 10) / 10, y: Math.round(r.top * 10) / 10,
-                    width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10
+                    width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10,
+                    viewWidth: window.innerWidth, viewHeight: window.innerHeight
                 };
                 var key = JSON.stringify(box);
                 if (key === last) return;

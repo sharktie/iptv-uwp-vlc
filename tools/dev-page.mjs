@@ -7,6 +7,7 @@
 //   node tools/dev-page.mjs --file script.js
 //   node tools/dev-page.mjs --key down           a controller button, as the app sends it
 //   node tools/dev-page.mjs --log [lines]        the end of the app's log
+//   node tools/dev-page.mjs "#cdp Emulation.setDeviceMetricsOverride {...}"   a DevTools call
 //
 // The script runs as with ExecuteScriptAsync: the value of its last expression comes back as
 // JSON (a Promise comes back as {}, so store async results on window and read them after).
